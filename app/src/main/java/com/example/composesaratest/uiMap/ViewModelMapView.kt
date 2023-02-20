@@ -32,6 +32,10 @@ class ViewModelMapView : ViewModel() , InterfaceViewModelMapView {
         showDetails.value = true
     }
 
+    override fun hideDetails() {
+        showDetails.value = false
+    }
+
     fun getPageOrderList() {
         viewModelScope.launch {
             runCatching {

@@ -73,7 +73,7 @@ fun CardDetails(viewModelMapView: ViewModelMapView, mapViewImpl: InterfaceMapObj
     ) {
         Column {
             AnimatedVisibility(visible = showDetails.value) {
-                Details(textDetails,mapViewImpl)
+                Details(textDetails,mapViewImpl,viewModelMapView)
             }
 
             AnimatedVisibility(visible = !showDetails.value) {
@@ -86,7 +86,7 @@ fun CardDetails(viewModelMapView: ViewModelMapView, mapViewImpl: InterfaceMapObj
 }
 
 @Composable
-fun Details(textDetails: State<String>, mapViewImpl: InterfaceMapObjectImpl) {
+fun Details(textDetails: State<String>, mapViewImpl: InterfaceMapObjectImpl, viewModelMapView: ViewModelMapView) {
     Column(modifier = Modifier.padding(top = 12.dp)) {
         Row(modifier = Modifier.padding(start = 12.dp)) {
             Image(
@@ -128,6 +128,7 @@ fun Details(textDetails: State<String>, mapViewImpl: InterfaceMapObjectImpl) {
             Button(
                 onClick = {
                     mapViewImpl.drivingCancel()
+                    viewModelMapView.hideDetails()
                 },
                 modifier = Modifier
                     .fillMaxWidth()
