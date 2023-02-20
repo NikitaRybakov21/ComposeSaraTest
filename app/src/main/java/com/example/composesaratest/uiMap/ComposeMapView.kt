@@ -21,6 +21,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.constraintlayout.compose.ConstraintLayout
 import com.example.composesaratest.R
 import com.yandex.mapkit.mapview.MapView
 
@@ -30,9 +31,6 @@ fun MapLayout(mapViewImpl: InterfaceMapObjectImpl, viewModelMapView: ViewModelMa
     val zoom by remember { mutableStateOf(14f) }
 
     val isMapStart = viewModelMapView.isStartMap.collectAsState()
-    val textDetails = viewModelMapView.textDetails.collectAsState()
-    val showDetails = viewModelMapView.showDetails.collectAsState()
-
     val listPointOrder by viewModelMapView.orderPoints.collectAsState()
 
     viewModelMapView.getPageOrderList()
@@ -42,8 +40,7 @@ fun MapLayout(mapViewImpl: InterfaceMapObjectImpl, viewModelMapView: ViewModelMa
     Column {
         Text(text = "Карта заказов", color = Color(167, 167, 167, 255), fontSize = 35.sp, modifier = Modifier.padding(start = 16.dp, bottom = 4.dp, top = 4.dp))
 
-        CardMap(mapViewImpl, listPointOrder.size, isMapStart)
-        CardDetails(textDetails, showDetails, mapViewImpl)
+        CardMap(mapViewImpl, listPointOrder.size, isMapStart, viewModelMapView)
     }
 }
 
@@ -59,12 +56,15 @@ fun SetStateMap(listPointOrder: List<MapObjectImpl.PointOrder>, mapViewImpl: Int
 }
 
 @Composable
-fun CardDetails(textDetails: State<String>, showDetails: State<Boolean>, mapViewImpl: InterfaceMapObjectImpl) {
+fun CardDetails(viewModelMapView: ViewModelMapView, mapViewImpl: InterfaceMapObjectImpl) {
+
+    val textDetails = viewModelMapView.textDetails.collectAsState()
+    val showDetails = viewModelMapView.showDetails.collectAsState()
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .wrapContentHeight()
-            .padding(top = 8.dp, start = 8.dp, end = 8.dp),
+            .wrapContentHeight(),
 
         backgroundColor = Color.White,
         elevation = 5.dp,
@@ -78,7 +78,7 @@ fun CardDetails(textDetails: State<String>, showDetails: State<Boolean>, mapView
 
             AnimatedVisibility(visible = !showDetails.value) {
                 Column(verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                    Text(text = "...", color = Color(110, 110, 110), fontSize = 30.sp, modifier = Modifier.padding(start = 16.dp, bottom = 4.dp, top = 4.dp))
+                    Text(text = "...", color = Color(110, 110, 110), fontSize = 30.sp, modifier = Modifier.padding(bottom = 4.dp, top = 4.dp))
                 }
             }
         }
@@ -116,7 +116,9 @@ fun Details(textDetails: State<String>, mapViewImpl: InterfaceMapObjectImpl) {
                 onClick = {
                     mapViewImpl.showDrivingRoute()
                 },
-                modifier = Modifier.wrapContentWidth().padding(top = 10.dp, start = 8.dp),
+                modifier = Modifier
+                    .wrapContentWidth()
+                    .padding(top = 10.dp, start = 8.dp),
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(backgroundColor = Color(238, 255, 250, 255))
             ) {
@@ -127,7 +129,9 @@ fun Details(textDetails: State<String>, mapViewImpl: InterfaceMapObjectImpl) {
                 onClick = {
                     mapViewImpl.drivingCancel()
                 },
-                modifier = Modifier.fillMaxWidth().padding(top = 10.dp, start = 4.dp, end = 8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 10.dp, start = 4.dp, end = 8.dp),
                    shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(Color.White)
             ) {
@@ -138,33 +142,34 @@ fun Details(textDetails: State<String>, mapViewImpl: InterfaceMapObjectImpl) {
 }
 
 @Composable
-fun CardMap(mapViewImpl: InterfaceMapObjectImpl, size: Int, isMapStart: State<Boolean>) {
+fun CardMap(mapViewImpl: InterfaceMapObjectImpl, size: Int, isMapStart: State<Boolean>, viewModelMapView: ViewModelMapView) {
 
     Card(modifier = Modifier
-        .clickable { }
         .fillMaxWidth()
-        .height(500.dp)
-        .padding(horizontal = 8.dp),
+        .fillMaxHeight()
+        .padding(bottom = 8.dp),
 
         backgroundColor = Color.White,
         elevation = 5.dp,
         shape = RoundedCornerShape(24.dp),
         border = BorderStroke(1.dp, Color.LightGray)
     ) {
-        Card(modifier = Modifier
-            .fillMaxWidth()
-            .wrapContentHeight(),
+        MapView(mapViewImpl.getMapView())
+        OptionMap(mapViewImpl,size)
 
-            backgroundColor = Color.White,
-            elevation = 5.dp,
-            shape = RoundedCornerShape(24.dp),
-            border = BorderStroke(1.dp, Color.LightGray)
-        ) {
-            MapView(mapViewImpl.getMapView())
-            OptionMap(mapViewImpl,size)
+        if(!isMapStart.value) {
+            LoadingMapAnimated()
+        }
 
-            if(!isMapStart.value) {
-                LoadingMapAnimated()
+        ConstraintLayout(modifier = Modifier.fillMaxSize()) {
+            val (cardDetails) = createRefs()
+
+            Column(modifier = Modifier.fillMaxWidth().constrainAs(cardDetails) {
+                    start.linkTo(parent.start)
+                    end.linkTo(parent.end)
+                    bottom.linkTo(parent.bottom)
+            }) {
+                CardDetails(viewModelMapView, mapViewImpl)
             }
         }
     }
